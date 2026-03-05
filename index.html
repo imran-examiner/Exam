@@ -147,7 +147,7 @@
 
 <div class="app-container">
     <div id="setup-screen" class="p-20">
-        <h2 style="margin-top:0;">পরীক্ষা সেটআপ</h2>
+        <h2 style="margin-top:0;">IMRAN ACADEMY EXAM CENTER</h2>
 
         <div class="form-group">
             <label>আপনার নাম:</label>
@@ -175,7 +175,7 @@
             <input type="number" id="time-limit" value="10" min="1">
         </div>
         <div class="form-group">
-            <label>নেগেটিভ মার্কিং (প্রতি ভুল উত্তরের জন্য কত কাটবে?):</label>
+            <label> নেগেটিভ মার্ক (প্রতি ভুল উত্তরের জন্য কত কাটবে?):</label>
             <select id="negative-mark">
                 <option value="0">কোন নেগেটিভ মার্ক নেই</option>
                 <option value="0.25">০.২৫ (0.25)</option>
@@ -217,7 +217,7 @@
 
     // EmailJS Initialize
     (function() {
-        emailjs.init("dtl9HyOi2wvJEUiRB"); // এখানে আপনার Public Key দিন
+        emailjs.init("dtl9HyOi2wvJEUiRB"); 
     })();
 
     const firebaseConfig = {
@@ -250,6 +250,20 @@
             return;
         }
 
+        // ২০ মিনিটের রেস্ট্রিকশন চেক
+        const lastExamTime = localStorage.getItem('last_exam_time_' + userEmail);
+        const currentTime = new Date().getTime();
+        const waitTime = 20 * 60 * 1000; 
+
+        if (lastExamTime) {
+            const timePassed = currentTime - parseInt(lastExamTime);
+            if (timePassed < waitTime) {
+                const remainingMinutes = Math.ceil((waitTime - timePassed) / (60 * 1000));
+                alert(`দুঃখিত! আপনি একবার পরীক্ষা দিয়েছেন। পুনরায় পরীক্ষা দিতে হলে আপনাকে আরও ${remainingMinutes} মিনিট অপেক্ষা করতে হবে।`);
+                return;
+            }
+        }
+
         const sub = document.getElementById('subject-select').value;
         const count = parseInt(document.getElementById('q-count').value);
         const timeLimit = parseInt(document.getElementById('time-limit').value);
@@ -263,9 +277,13 @@
             questions = snapshot.docs.map(doc => doc.data());
 
             if(questions.length === 0) {
-                alert("দুঃখিত, এই বিষয়ে ডাটাবেসে কোন প্রশ্ন পাওয়া যায়নি! আগে অ্যাডমিন প্যানেল দিয়ে প্রশ্ন যোগ করুন।");
+                alert("দুঃখিত, এই বিষয়ে ডাটাবেসে কোন প্রশ্ন পাওয়া যায়নি!");
                 return;
             }
+
+            // --- প্রশ্ন এলোমেলো (Shuffle) করার লজিক ---
+            questions.sort(() => Math.random() - 0.5);
+            // ----------------------------------------
 
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('exam-screen').classList.remove('hidden');
@@ -275,7 +293,7 @@
             renderQuestion();
         } catch (error) {
             console.error("Error fetching questions: ", error);
-            alert("ডাটাবেস কানেকশনে সমস্যা হয়েছে। Rules চেক করুন।");
+            alert("ডাটাবেস কানেকশনে সমস্যা হয়েছে।");
         }
     }
 
@@ -326,6 +344,9 @@
         document.getElementById('exam-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
 
+        const userEmail = document.getElementById('user-email').value;
+        localStorage.setItem('last_exam_time_' + userEmail, new Date().getTime());
+
         let correctCount = 0;
         wrongCount = 0;
 
@@ -350,7 +371,7 @@
         `;
 
         let solHTML = "";
-        let mailDetails = ""; // ইমেইলের জন্য সলিউশন টেক্সট
+        let mailDetails = ""; 
 
         userAnswers.forEach((item, i) => {
             const isCorrect = (item && item.selected === item.correct);
@@ -367,7 +388,6 @@
         });
         document.getElementById('solutions-container').innerHTML = solHTML;
 
-        // EmailJS এর মাধ্যমে ইমেইল পাঠানো
         sendEmailResult(correctCount, wrongCount, finalScore.toFixed(2), percentage, mailDetails);
     }
 
@@ -390,7 +410,6 @@
             solution_details: details
         };
 
-        // এখানে আপনার Service ID এবং Template ID দিন
         emailjs.send('service_272nuuq', 'template_hlm44yd', templateParams)
             .then(function(response) {
                 statusDiv.style.color = "green";
