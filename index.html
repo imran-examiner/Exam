@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Exam Portal - High Quality MCQ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+    :root { 
+        --primary: #4f46e5; 
+        --primary-hover: #4338ca;
+        --secondary: #10b981; 
+        --dark: #1f2937; 
+        --error: #ef4444; 
+        --bg: #f8fafc;
+    }
+    
+    body { 
+        font-family: 'Hind Siliguri', sans-serif; 
+        background: var(--bg); 
+        margin: 0; 
+        display: flex; 
+        justify-content: center; 
+        min-height: 100vh; 
+        color: #334155;
+    }
+
+    .app-container { 
+        width: 100%; 
+        max-width: 800px; 
+        background: white; 
+        margin: 20px; 
+        border-radius: 16px; 
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); 
+        overflow: hidden; 
+        border: 1px solid #e2e8f0;
+    }
+
+    .p-20 { padding: 40px; }
+    
+    /* Setup Screen */
+    .setup-screen h2 { color: var(--dark); text-align: center; margin-bottom: 30px; }
+    .form-group { margin-bottom: 24px; }
+    label { display: block; margin-bottom: 10px; font-weight: 600; color: #475569; font-size: 15px; }
+    
+    select, input { 
+        width: 100%; 
+        padding: 14px; 
+        border: 2px solid #e2e8f0; 
+        border-radius: 10px; 
+        font-size: 16px; 
+        box-sizing: border-box; 
+        transition: all 0.3s;
+        outline: none;
+    }
+
+    select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+    
+    /* Exam Screen Header */
+    .exam-header { 
+        display: flex; 
+        justify-content: space-between; 
+        background: var(--dark); 
+        color: white; 
+        padding: 20px 30px; 
+        align-items: center;
+        font-weight: 600;
+    }
+    #timer { font-size: 22px; font-weight: 800; color: #fbbf24; letter-spacing: 1px; }
+    
+    /* Option Cards */
+    .option-card { 
+        display: block; 
+        width: 100%; 
+        padding: 18px 22px; 
+        margin: 14px 0; 
+        border: 2px solid #f1f5f9; 
+        border-radius: 12px; 
+        cursor: pointer; 
+        text-align: left; 
+        transition: all 0.2s ease-in-out; 
+        font-size: 17px; 
+        background: #fdfdfd; 
+        color: #334155;
+        font-weight: 500;
+        position: relative;
+    }
+
+    .option-card:hover { 
+        border-color: var(--primary); 
+        background: #f5f3ff; 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .option-card.selected { 
+        border-color: var(--primary); 
+        background: #eef2ff; 
+        border-width: 2px;
+        color: var(--primary);
+        font-weight: 600;
+    }
+    
+    .btn-start { 
+        background: var(--primary); 
+        color: white; 
+        width: 100%; 
+        border: none; 
+        padding: 16px; 
+        border-radius: 10px; 
+        font-size: 18px; 
+        cursor: pointer; 
+        font-weight: 600; 
+        transition: background 0.3s, transform 0.1s;
+    }
+
+    .btn-start:hover { background: var(--primary-hover); }
+    .btn-start:active { transform: scale(0.98); }
+
+    .hidden { display: none; }
+    
+    /* Result Styles */
+    .score-summary { 
+        background: linear-gradient(145deg, #ffffff, #f1f5f9); 
+        padding: 25px; 
+        border-radius: 14px; 
+        margin-bottom: 25px; 
+        border: 1px solid #e2e8f0; 
+        text-align: center;
+    }
+
+    .sol-box { 
+        border-left: 6px solid #cbd5e1; 
+        padding: 20px; 
+        margin-bottom: 20px; 
+        background: white; 
+        border-radius: 0 12px 12px 0; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .sol-box.correct { border-left-color: var(--secondary); background: #f0fdf4; }
+    .sol-box.wrong { border-left-color: var(--error); background: #fef2f2; }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+    <div id="setup-screen" class="p-20">
+        <h2 style="margin-top:0;">পরীক্ষা সেটআপ</h2>
+        
+        <div class="form-group">
+            <label>বিষয় নির্বাচন করুন:</label>
+            <select id="subject-select">
+                <option value="Physics">পদার্থবিজ্ঞান (Physics)</option>
+                <option value="Chemistry">রসায়ন (Chemistry)</option>
+                <option value="Math">উচ্চতর গণিত (Higher Math)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>প্রশ্নের সংখ্যা:</label>
+            <input type="number" id="q-count" value="10" min="1">
+        </div>
+        <div class="form-group">
+            <label>সময় (মিনিট):</label>
+            <input type="number" id="time-limit" value="10" min="1">
+        </div>
+        <div class="form-group">
+            <label>নেগেটিভ মার্কিং (প্রতি ভুল উত্তরের জন্য কত কাটবে?):</label>
+            <select id="negative-mark">
+                <option value="0">কোন নেগেটিভ মার্ক নেই</option>
+                <option value="0.25">০.২৫ (0.25)</option>
+                <option value="0.50">০.৫০ (0.50)</option>
+                <option value="1.00">১.০০ (1.00)</option>
+            </select>
+        </div>
+        <button class="btn-start" onclick="startExam()">পরীক্ষা শুরু করুন</button>
+    </div>
+
+    <div id="exam-screen" class="hidden">
+        <div class="exam-header">
+            <span id="subject-name">Subject</span>
+            <span id="timer">00:00</span>
+        </div>
+        <div class="p-20">
+            <div id="question-box">
+                <h3 id="q-text">লোড হচ্ছে...</h3>
+                <div id="options-box"></div>
+            </div>
+            <button id="next-btn" class="btn-start" style="margin-top:20px; display:none;">পরবর্তী প্রশ্ন</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden p-20">
+        <h2 style="text-align:center">ফলাফল কার্ড</h2>
+        <div class="score-summary" id="score-summary-box"></div>
+        <hr>
+        <h3>সলিউশন ডিটেইলস:</h3>
+        <div id="solutions-container"></div>
+        <button class="btn-start" onclick="location.reload()">আবার পরীক্ষা দিন</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // *** তোমার দেওয়া Firebase Config এখানে সেট করা হয়েছে ***
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2FOd_BoCqcu49ijp5ffB1kdPB56PHz3Y",
+        authDomain: "group-chat-74483.firebaseapp.com",
+        projectId: "group-chat-74483",
+        storageBucket: "group-chat-74483.firebasestorage.app",
+        messagingSenderId: "1033238887345",
+        appId: "1:1033238887345:web:2f4d10eabaf33e8e481b90",
+        measurementId: "G-K3QHWJYRRP"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let questions = [];
+    let currentIdx = 0;
+    let score = 0;
+    let wrongCount = 0;
+    let userAnswers = [];
+    let timerInterval;
+    let negMarkValue = 0;
+
+    window.startExam = async function() {
+        const sub = document.getElementById('subject-select').value;
+        const count = parseInt(document.getElementById('q-count').value);
+        const timeLimit = parseInt(document.getElementById('time-limit').value);
+        negMarkValue = parseFloat(document.getElementById('negative-mark').value);
+
+        try {
+            const qRef = collection(db, "questions");
+            const qQuery = query(qRef, where("subject", "==", sub), limit(count));
+            
+            const snapshot = await getDocs(qQuery);
+            questions = snapshot.docs.map(doc => doc.data());
+
+            if(questions.length === 0) {
+                alert("দুঃখিত, এই বিষয়ে ডাটাবেসে কোন প্রশ্ন পাওয়া যায়নি! আগে অ্যাডমিন প্যানেল দিয়ে প্রশ্ন যোগ করুন।");
+                return;
+            }
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+            document.getElementById('subject-name').innerText = sub + " Exam";
+            
+            startTimer(timeLimit * 60);
+            renderQuestion();
+        } catch (error) {
+            console.error("Error fetching questions: ", error);
+            alert("ডাটাবেস কানেকশনে সমস্যা হয়েছে। Rules চেক করুন।");
+        }
+    }
+
+    function startTimer(seconds) {
+        let timeLabel = document.getElementById('timer');
+        timerInterval = setInterval(() => {
+            let mins = Math.floor(seconds / 60);
+            let secs = seconds % 60;
+            timeLabel.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            if (seconds <= 0) {
+                clearInterval(timerInterval);
+                finishExam();
+            }
+            seconds--;
+        }, 1000);
+    }
+
+    function renderQuestion() {
+        const q = questions[currentIdx];
+        document.getElementById('q-text').innerText = `${currentIdx + 1}. ${q.question}`;
+        const optBox = document.getElementById('options-box');
+        const nextBtn = document.getElementById('next-btn');
+        optBox.innerHTML = '';
+        nextBtn.style.display = 'none';
+
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-card';
+            btn.innerText = opt;
+            btn.onclick = () => {
+                document.querySelectorAll('.option-card').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                nextBtn.style.display = 'block';
+                userAnswers[currentIdx] = { q: q.question, selected: opt, correct: q.answer };
+            };
+            optBox.appendChild(btn);
+        });
+    }
+
+    document.getElementById('next-btn').onclick = () => {
+        currentIdx++;
+        if(currentIdx < questions.length) renderQuestion();
+        else finishExam();
+    }
+
+    function finishExam() {
+        clearInterval(timerInterval);
+        document.getElementById('exam-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        let correctCount = 0;
+        wrongCount = 0;
+
+        userAnswers.forEach(ans => {
+            if(ans && ans.selected === ans.correct) correctCount++;
+            else if(ans) wrongCount++;
+        });
+
+        const totalDeduction = wrongCount * negMarkValue;
+        const finalScore = correctCount - totalDeduction;
+
+        document.getElementById('score-summary-box').innerHTML = `
+            <div style="font-size:18px; line-height:1.6;">
+                <p>সঠিক উত্তর: <span style="color:green; font-weight:bold;">${correctCount}</span></p>
+                <p>ভুল উত্তর: <span style="color:red; font-weight:bold;">${wrongCount}</span></p>
+                <p>নেগেটিভ মার্কিং কাটা গেছে: <span style="color:red;">${totalDeduction.toFixed(2)}</span></p>
+                <p style="font-size:24px; border-top:2px solid #ddd; padding-top:10px;">
+                    আপনার মোট প্রাপ্ত নম্বর: <span style="color:var(--primary);">${finalScore.toFixed(2)}</span>
+                </p>
+            </div>
+        `;
+
+        let solHTML = "";
+        userAnswers.forEach((item, i) => {
+            const isCorrect = (item && item.selected === item.correct);
+            if(item) {
+                solHTML += `
+                    <div class="sol-box ${isCorrect ? 'correct' : 'wrong'}">
+                        <strong>${i+1}. ${item.q}</strong><br>
+                        আপনার উত্তর: ${item.selected} ${isCorrect ? '✅' : '❌'}<br>
+                        ${!isCorrect ? `সঠিক উত্তর: <span style="color:green; font-weight:bold;">${item.correct}</span>` : ''}
+                    </div>`;
+            }
+        });
+        document.getElementById('solutions-container').innerHTML = solHTML;
+    }
+</script>
+</body>
+</html>
