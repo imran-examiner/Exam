@@ -254,7 +254,7 @@
 
         const lastExamTime = localStorage.getItem('last_exam_time_' + userEmail);
         const currentTime = new Date().getTime();
-        const waitTime = 20 * 60 * 1000; 
+        const waitTime = 3 * 60 * 1000; 
 
         if (lastExamTime) {
             const timePassed = currentTime - parseInt(lastExamTime);
